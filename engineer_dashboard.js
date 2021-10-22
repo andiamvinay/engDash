@@ -1,3 +1,16 @@
+// ==UserScript==
+// @name         Reporting on HI
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Reporting on HI
+// @author       You
+// @match        https://support.servicenow.com/*dashboard*
+// @icon         https://www.google.com/s2/favicons?domain=servicenow.com
+// @require      https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js
+// @grant        none
+// ==/UserScript==
 (function() {
     'use strict';
     $j(document).ready(function() {
@@ -5,10 +18,13 @@
         //Add Button to switch to report view
         //###################################
         var zNode = document.createElement('div');
-        zNode.innerHTML = '<button id="switch_to_report_view" type="button">' + 'Switch to Report</button>';
+        zNode.innerHTML = '<button id="switch_to_report_view" type="button" style="display:none">' + 'Switch to Report</button>';
         $j('.sn-canvas-nav-buttons').parent().append(zNode);
         document.getElementById("switch_to_report_view").addEventListener("click", ButtonClickAction, false);
-
+        // Enable only for managers
+        if(window.NOW.user.allRoles.includes("sn_customerservice_manager")){
+            document.getElementById("switch_to_report_view").style.display = '';
+        }
         function ButtonClickAction(zEvent) {
             $j('.sn-canvas-left').hide();
             $j('.sn-canvas-right').hide();
@@ -27,7 +43,7 @@
                 <div class="container" id="parent-container-report">
                   <div class="row">
                       <div class="vsplit col-sm-8" id="col1">
-                      <div class="header_text">Engineer Dashboard</div>
+                      <div class="header_text">Dashboard</div>
                       </div>
                       <div class="vsplit col-sm-3" id="col2">
                       </div>
@@ -79,13 +95,13 @@
             zNode.innerHTML = `<br><br>`;
             zNode.innerHTML += `<label for="selected_manager">Select Manager:  </label>`;
             zNode.innerHTML += `<br>`;
-            zNode.innerHTML += ` <input id="selected_manager" list="select_manager" style="width: 70%;"><datalist id="select_manager"></datalist>`;
+            zNode.innerHTML += ` <input id="selected_manager" list="select_manager" style="width: 70%;" autocomplete="off"><datalist id="select_manager"></datalist>`;
             $j('#col2').append(zNode);
             zNode = document.createElement('div');
             zNode.innerHTML = `<br>`;
             zNode.innerHTML += `<label for="selected_engineer">Select Engineer:  </label>`;
             zNode.innerHTML += `<br>`;
-            zNode.innerHTML += ` <input id="selected_engineer" list="select_engineer" style="width: 70%;"><datalist id="select_engineer"></datalist>`;
+            zNode.innerHTML += ` <input id="selected_engineer" list="select_engineer" style="width: 70%;" autocomplete="off"><datalist id="select_engineer"></datalist>`;
             $j('#col2').append(zNode);
             zNode = document.createElement('div');
             zNode.innerHTML = `<br><br>`;
@@ -186,7 +202,7 @@
                     getEngTasksHandled(engineer_sys_id);
                     getEngEscalations(engineer_sys_id);
                     getEngSolutionRejected(engineer_sys_id);
-                    $j("#download_file").show();
+                    //$j("#download_file").show();
 
                 } else {
                     alert("Select Start Date, End Date, Mananger and Engineer");
@@ -318,12 +334,18 @@
             //Get Support Managers
             //####################################
             function getManagers() {
+                const logged_in_user_sysid = window.NOW.user.userID;
                 $j('#selected_manager').val("..Loading");
                 $j("#selected_manager").prop('disabled', true);
                 $j("#selected_engineer").prop('disabled', true);
                 var table_name = "sys_user";
                 var sysparm_fields = "sys_id,name";
-                var sysparm_query = `active=true^department=3a5c578adb99bf44fec4fb2439961984^ORdepartment=66e0413cdb836cd04fee66f748961927^titleLIKEmanager^ORtitleLIKEDirector^ORtitleLIKEMgmt`;
+                var sysparm_query = `active=true^u_mgmt_level1=${logged_in_user_sysid}
+                ^ORu_mgmt_level2=${logged_in_user_sysid}^ORu_mgmt_level3=${logged_in_user_sysid}
+                ^ORu_mgmt_level4=${logged_in_user_sysid}^ORu_mgmt_level5=${logged_in_user_sysid}
+                ^ORu_mgmt_level6=${logged_in_user_sysid}^ORu_mgmt_level7=${logged_in_user_sysid}
+                ^ORmanager=${logged_in_user_sysid}^titleNOT LIKEengineer^titleNOT LIKEResource
+                ^titleNOT LIKERepresentative^titleNOT LIKEIntern^titleNOT LIKESupport Rep^NQsys_id=${logged_in_user_sysid}^ORDERBYname`;
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
