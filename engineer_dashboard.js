@@ -238,6 +238,7 @@
                     height: 100px;
                     line-height: 100px;
                     font-size: 50px;
+                    color: #1f8476;
                  }
                 </style>
                 `;
@@ -371,7 +372,7 @@
                 }
                 var table_name = "sys_user";
                 var sysparm_fields = "sys_id,name";
-                var sysparm_query = `active=true^department=3a5c578adb99bf44fec4fb2439961984^ORdepartment=66e0413cdb836cd04fee66f748961927^manager=${manager_sys_id}`;
+                var sysparm_query = `active=true^department=3a5c578adb99bf44fec4fb2439961984^ORdepartment=66e0413cdb836cd04fee66f748961927^manager=${manager_sys_id}^ORDERBYname`;
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
@@ -385,6 +386,41 @@
                 }
                 xmlhttpReq.send();
             };
+
+            //####################################
+            //Get Query String Vals
+            //####################################
+            function getQueryStringVals(result, field){
+                if(!field){
+                    field = "number";
+                }
+                if(result.length == 0){
+                    return "norecordsfound";
+                }
+
+                if(result.length == 1){
+                    return result[0][field];
+                }
+                return result.reduce(function(previousValue, currentValue, currentIndex, array) {
+                    if(typeof previousValue == 'object'){
+                        return previousValue[field] +"," +currentValue[field]
+                    }
+                return previousValue +"," +currentValue[field]
+                })
+            }
+
+            //####################################
+            //Add Link function
+            //####################################
+            function addValueLink(urlString, value, parameter, table){
+                var temp_link = document.createElement("a");
+                temp_link.href = "https://support.servicenow.com/";
+                temp_link.href += `${table}_list.do?sysparm_query=numberIN${urlString}`
+                temp_link.target = '_blank';
+                temp_link.innerHTML = value;
+                $j(`#${parameter}`).html(temp_link);
+            }
+
             //####################################
             //Get total assigned for engineer
             //####################################
@@ -397,8 +433,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var value = JSON.parse(this.response).result.length;
-                        $j('#total_assigned').text(value)
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result), result.length , "total_assigned", "sn_customerservice_case");
                     }
                 }
                 xmlhttpReq.send();
@@ -415,8 +451,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var value = JSON.parse(this.response).result.length;
-                        $j('#total_closed').text(value)
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result), result.length , "total_closed", "sn_customerservice_case");
                         get48HoursClosed(engineer_sys_id);
                         getEngAttachRate(engineer_sys_id);
                     }
@@ -436,8 +472,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var value = JSON.parse(this.response).result.length;
-                        $j('#48_closed').text(value);
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result), result.length , "48_closed", "sn_customerservice_case");
                         var closed_48 = parseInt($j('#48_closed').text());
                         var closed = parseInt($j('#total_closed').text());
                         var percent_48 = ((closed_48 / closed) * 100).toFixed(2);
@@ -512,8 +548,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var kbIarr = JSON.parse(this.response).result.length;
-                        $j('#kb_internal').text(`  ${kbIarr}`);
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result), result.length , "kb_internal", "kb_knowledge");
                     }
                 }
                 xmlhttpReq.send();
@@ -532,8 +568,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var kbEarr = JSON.parse(this.response).result.length;
-                        $j('#kb_external').text(kbEarr);
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result), result.length , "kb_external", "kb_knowledge");
                     }
                 }
                 xmlhttpReq.send();
@@ -552,7 +588,9 @@
                     if (this.readyState == this.DONE) {
                         var closedCases = parseInt($j('#total_closed').text());
                         var attachLength = JSON.parse(this.response).result.length;
-                        $j('#attach_rate').text(closedCases > 0 ? ((attachLength / closedCases) * 100).toFixed(2) : 0);
+                        var result = JSON.parse(this.response).result;
+                        var value = closedCases > 0 ? ((attachLength / closedCases) * 100).toFixed(2) : 0;
+                        addValueLink(getQueryStringVals(result), value , "attach_rate", "sn_customerservice_case");
                     }
                 }
                 xmlhttpReq.send();
@@ -570,8 +608,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var tasksHandled = JSON.parse(this.response).result.length;
-                        $j('#tasks_handled').text(tasksHandled);
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result), result.length , "tasks_handled", "sn_customerservice_task");
                     }
                 }
                 xmlhttpReq.send();
@@ -581,15 +619,15 @@
             //####################################
             function getEngEscalations(engineer_sys_id) {
                 var table_name = "u_case_escalation";
-                var sysparm_fields = "number";
+                var sysparm_fields = "cs_number";
                 var startDate = $j('#start').val();
                 var endDate = $j('#end').val();
                 var sysparm_query = `cs_assigned_to=${engineer_sys_id}^escl_sys_created_onBETWEENjavascript:gs.dateGenerate('${startDate}','00:00:00')@javascript:gs.dateGenerate('${endDate}','23:59:59')`;
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var escalations = JSON.parse(this.response).result.length;
-                        $j('#escalations').text(escalations);
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result, "cs_number"), result.length , "escalations", "sn_customerservice_case");
                     }
                 }
                 xmlhttpReq.send();
@@ -607,8 +645,8 @@
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
-                        var kbEarr = JSON.parse(this.response).result.length;
-                        $j('#sol_rejected').text(kbEarr);
+                        var result = JSON.parse(this.response).result;
+                        addValueLink(getQueryStringVals(result, "cs_number"), result.length , "sol_rejected", "sn_customerservice_case");
                     }
                 }
                 xmlhttpReq.send();
