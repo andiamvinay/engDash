@@ -419,6 +419,11 @@
                 temp_link.target = '_blank';
                 temp_link.innerHTML = value;
                 $j(`#${parameter}`).html(temp_link);
+                temp_link.addEventListener("click", function(event){
+                    event.preventDefault();
+                    //addTiny URL functionality
+                    window.g_navigation.open(event.target.href, "_blank")
+                });
             }
 
             //####################################
