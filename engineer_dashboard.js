@@ -519,7 +519,7 @@
                 var sysparm_fields = "opened_at,resolved_at";
                 var startDate = $j('#start').val();
                 var endDate = $j('#end').val();
-                var sysparm_query = `assigned_to=${engineer_sys_id}^closed_atBETWEENjavascript:gs.dateGenerate('${startDate}','00:00:00')@javascript:gs.dateGenerate('${endDate}','23:59:59')`;
+                var sysparm_query = `u_us_soil=false^assigned_to=${engineer_sys_id}^closed_atBETWEENjavascript:gs.dateGenerate('${startDate}','00:00:00')@javascript:gs.dateGenerate('${endDate}','23:59:59')`;
                 var xmlhttpReq = sendRequest(table_name, sysparm_fields, sysparm_query);
                 xmlhttpReq.onreadystatechange = function() {
                     if (this.readyState == this.DONE) {
